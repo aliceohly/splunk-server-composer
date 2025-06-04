@@ -14,14 +14,18 @@ import {
   Box,
   Divider,
   Alert,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
-import { CPUType, ServerConfiguration, ServerEvaluationResult } from './types/server';
+import { ServerConfiguration, ServerEvaluationResult } from './types/server';
+import { CpuType } from './types/cpu';
 import { evaluateServerConfiguration, validateMemorySize } from './reducers/serverReducer';
 
 function App() {
   const [config, setConfig] = useState<ServerConfiguration>({
-    cpu: 'X86',
-    memorySize: 4096,
+    cpu: CpuType.X86,
+    memorySize: 2048,
     hasGpuAccelerator: false,
   });
   const [result, setResult] = useState<ServerEvaluationResult | null>(null);
@@ -32,10 +36,7 @@ function App() {
     setError('');
 
     // Validate memory size
-    if (!validateMemorySize(config.memorySize)) {
-      setError('Memory size must be a power of 2 between 2,048MB and 8,388,608MB');
-      return;
-    }
+    if (!validateMemorySize(config.memorySize)) setError('Memory size must be a power of 2 between 2,048MB and 8,388,608MB');
 
     const evaluationResult = evaluateServerConfiguration(config);
     setResult(evaluationResult);
@@ -52,7 +53,7 @@ function App() {
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Server Model Composer
+          Server Composer
         </Typography>
 
         <form onSubmit={handleSubmit}>
@@ -61,24 +62,27 @@ function App() {
               <InputLabel>CPU</InputLabel>
               <Select
                 value={config.cpu}
-                label="CPU"
-                onChange={(e) => setConfig({ ...config, cpu: e.target.value as CPUType })}
+                label="CPU Type"
+                onChange={(e) => setConfig({ ...config, cpu: e.target.value as CpuType })}
               >
-                <MenuItem value="X86">X86</MenuItem>
-                <MenuItem value="Power">Power</MenuItem>
-                <MenuItem value="ARM">ARM</MenuItem>
+                <MenuItem value={CpuType.X86}>X86</MenuItem>
+                <MenuItem value={CpuType.Power}>Power</MenuItem>
+                <MenuItem value={CpuType.ARM}>ARM</MenuItem>
               </Select>
             </FormControl>
-
             <TextField
               fullWidth
-              label="Memory Size (MB)"
+              label="Memory Size"
               value={config.memorySize.toLocaleString()}
               onChange={handleMemoryChange}
               sx={{ mb: 2 }}
               helperText="Must be a power of 2 between 2,048MB and 8,388,608MB"
+              slotProps={{
+                input: {
+                  endAdornment: <span style={{ marginLeft: '8px', color: 'rgba(0, 0, 0, 0.87)' }}>MB</span>,
+                }
+              }}
             />
-
             <FormControlLabel
               control={
                 <Checkbox
@@ -89,7 +93,6 @@ function App() {
               label="GPU Accelerator Card"
             />
           </Box>
-
           <Button type="submit" variant="contained" color="primary" fullWidth>
             Submit
           </Button>
@@ -104,16 +107,32 @@ function App() {
         {result && (
           <>
             <Divider sx={{ my: 3 }} />
-            <Typography variant="h6" gutterBottom>
-              Results
-            </Typography>
             <Typography variant="body1" gutterBottom>
-              <strong>Available Models:</strong>{' '}
-              {result.models.length > 0 ? result.models.join(' or ') : 'No Options'}
+              <strong>Server Model Options</strong>
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Reason:</strong> {result.reason}
+            <List dense sx={{ listStyleType: 'disc', pl: 5 }}>
+              {result.models.length > 0 ? (
+                result.models.map((model, index) => (
+                  <ListItem key={index} sx={{ display: 'list-item' }}>
+                    <ListItemText primary={model} />
+                  </ListItem>
+                ))
+              ) : (
+                <ListItem sx={{ display: 'list-item' }}>
+                  <ListItemText primary="No Options" />
+                </ListItem>
+              )}
+            </List>
+            <Typography variant="body1">
+              <strong>Rules Applied</strong>
             </Typography>
+            <List dense sx={{ listStyleType: 'disc', pl: 5 }}>
+              {result.reasons.map((rule, index) => (
+                <ListItem key={index} sx={{ display: 'list-item' }}>
+                  <ListItemText primary={rule} />
+                </ListItem>
+              ))}
+            </List>
           </>
         )}
       </Paper>

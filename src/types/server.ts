@@ -1,14 +1,13 @@
-export type CPUType = 'X86' | 'Power' | 'ARM';
-
-export type ServerModel = 'Tower Server' | '4U Rack Server' | 'Mainframe' | 'High Density Server';
+import { CpuType } from './cpu';
+import { ServerModel } from './serverModel';
 
 export interface ServerConfiguration {
-  cpu: CPUType;
+  cpu: CpuType;
   memorySize: number;
   hasGpuAccelerator: boolean;
 }
 
 export interface ServerEvaluationResult {
   models: ServerModel[];
-  reason: string;
+  reasons: string[];
 } 

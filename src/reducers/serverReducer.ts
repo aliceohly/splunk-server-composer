@@ -3,7 +3,7 @@ import { ServerConfiguration, ServerEvaluationResult, ServerModel } from '../typ
 // Constants for memory size validation
 const MIN_MEMORY = 2048;
 const MAX_MEMORY = 8388608;
-const MIN_MEMORY_GPU = 524288;
+const MIN_MEMORY_GPU_ACCELERATOR = 524288;
 const MIN_MEMORY_4U = 131072;
 
 export const evaluateServerConfiguration = (config: ServerConfiguration): ServerEvaluationResult => {
@@ -15,43 +15,54 @@ export const evaluateServerConfiguration = (config: ServerConfiguration): Server
   if (memorySize < MIN_MEMORY) {
     return {
       models: [],
-      reason: 'Match Rule 4: Memory is lower than 2,048MB'
+      reason: 'Rule 4: Memory is lower than 2,048MB - No Options'
     };
   }
 
   // Rule 1: GPU Accelerator Card check
   if (hasGpuAccelerator) {
-    if (cpu === 'ARM' && memorySize >= MIN_MEMORY_GPU) {
+    if (cpu === 'ARM' && memorySize >= MIN_MEMORY_GPU_ACCELERATOR) {
       return {
         models: ['High Density Server'],
-        reason: 'Match Rule 1'
+        reason: 'Rule 1: Matches GPU Accelerator requirements'
       };
     }
     return {
       models: [],
-      reason: 'GPU Accelerator requires ARM CPU and memory >= 524,288MB'
+      reason: 'Rule 1: GPU Accelerator requires ARM CPU and memory >= 524,288MB - No Options'
     };
   }
 
-  // Rule 2: Power CPU check
+  // Rules 2 and 3: CPU and Memory combinations
   if (cpu === 'Power') {
     models.push('Mainframe');
-    reasons.push('Power CPU can build Mainframe');
-  }
-
-  // Rule 3: Memory size check for Tower and 4U Rack
-  if (memorySize >= MIN_MEMORY_4U) {
-    models.push('4U Rack Server');
-    models.push('Tower Server');
-    reasons.push('Memory >= 131,072MB can be both 4U Rack Server and Tower Server');
+    reasons.push('Rule 2: Power CPU can build Mainframe');
+    
+    if (memorySize >= MIN_MEMORY_4U) {
+      models.push('4U Rack Server');
+      models.push('Tower Server');
+      reasons.push('Rule 3: Memory >= 131,072MB allows 4U Rack Server and Tower Server');
+    } else {
+      models.push('Tower Server');
+      reasons.push('Rule 3: Memory < 131,072MB allows Tower Server');
+    }
   } else {
-    models.push('Tower Server');
-    reasons.push('Memory < 131,072MB can only be Tower Server');
+    if (memorySize >= MIN_MEMORY_4U) {
+      models.push('4U Rack Server');
+      models.push('Tower Server');
+      reasons.push('Rule 3: Memory >= 131,072MB allows 4U Rack Server and Tower Server');
+    } else {
+      models.push('Tower Server');
+      reasons.push('Rule 3: Memory < 131,072MB allows Tower Server');
+    }
   }
 
-  // Additional Power CPU models
-  if (cpu === 'Power' && !hasGpuAccelerator) {
-    reasons.push('Power CPU can build other Server Models except High Density');
+  // Rule 4: Default case - No Options if no models were added
+  if (models.length === 0) {
+    return {
+      models: [],
+      reason: 'Rule 5: No matching server configurations found'
+    };
   }
 
   return {

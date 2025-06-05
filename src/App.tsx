@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Container,
   Paper,
@@ -17,35 +17,43 @@ import {
   List,
   ListItem,
   ListItemText,
-} from '@mui/material';
-import { ServerConfiguration, ServerEvaluationResult } from './types/server';
-import { CpuType } from './types/cpu';
-import { evaluateServerConfiguration, validateMemorySize } from './reducers/serverReducer';
+  SelectChangeEvent,
+} from "@mui/material";
+import { ServerConfiguration, ServerEvaluationResult } from "./types/server";
+import { CpuType } from "./types/cpu";
+import {
+  evaluateServerConfiguration,
+  validateMemorySize,
+} from "./reducers/serverReducer";
 
 function App() {
+  const cpuTypes: CpuType[] = ["X86", "Power", "ARM"];
+
   const [config, setConfig] = useState<ServerConfiguration>({
-    cpu: CpuType.X86,
+    cpu: cpuTypes[0],
     memorySize: 2048,
     hasGpuAccelerator: false,
   });
   const [result, setResult] = useState<ServerEvaluationResult | null>(null);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
-    // Validate memory size
-    if (!validateMemorySize(config.memorySize)) setError('Memory size must be a power of 2 between 2,048MB and 8,388,608MB');
+    if (!validateMemorySize(config.memorySize))
+      setError(
+        "Memory size must be a power of 2 between 2,048MB and 8,388,608MB"
+      );
 
     const evaluationResult = evaluateServerConfiguration(config);
     setResult(evaluationResult);
   };
 
   const handleMemoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value.replace(/,/g, ''), 10);
-    if (!isNaN(value)) {
-      setConfig({ ...config, memorySize: value });
+    const memorySize = parseInt(e.target.value.replace(/,/g, ""), 10);
+    if (!isNaN(memorySize)) {
+      setConfig({ ...config, memorySize: memorySize });
     }
   };
 
@@ -59,15 +67,25 @@ function App() {
         <form onSubmit={handleSubmit}>
           <Box sx={{ mb: 3 }}>
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>CPU</InputLabel>
+              <InputLabel id="cpu-label">CPU</InputLabel>
               <Select
+                data-testid="cpu-select"
+                labelId="cpu-label"
                 value={config.cpu}
-                label="CPU Type"
-                onChange={(e) => setConfig({ ...config, cpu: e.target.value as CpuType })}
+                label="CPU"
+                onChange={(e: SelectChangeEvent<CpuType>) =>
+                  setConfig({ ...config, cpu: e.target.value })
+                }
               >
-                <MenuItem value={CpuType.X86}>X86</MenuItem>
-                <MenuItem value={CpuType.Power}>Power</MenuItem>
-                <MenuItem value={CpuType.ARM}>ARM</MenuItem>
+                {cpuTypes.map((cpuType) => (
+                  <MenuItem
+                    key={cpuType}
+                    value={cpuType}
+                    data-testid={`cpu-${cpuType.toLowerCase()}`}
+                  >
+                    {cpuType}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             <TextField
@@ -79,15 +97,29 @@ function App() {
               helperText="Must be a power of 2 between 2,048MB and 8,388,608MB"
               slotProps={{
                 input: {
-                  endAdornment: <span style={{ marginLeft: '8px', color: 'rgba(0, 0, 0, 0.87)' }}>MB</span>,
-                }
+                  endAdornment: (
+                    <span
+                      style={{
+                        marginLeft: "8px",
+                        color: "rgba(0, 0, 0, 0.87)",
+                      }}
+                    >
+                      MB
+                    </span>
+                  ),
+                },
               }}
             />
             <FormControlLabel
               control={
                 <Checkbox
                   checked={config.hasGpuAccelerator}
-                  onChange={(e) => setConfig({ ...config, hasGpuAccelerator: e.target.checked })}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      hasGpuAccelerator: e.target.checked,
+                    })
+                  }
                 />
               }
               label="GPU Accelerator Card"
@@ -110,25 +142,25 @@ function App() {
             <Typography variant="body1" gutterBottom>
               <strong>Server Model Options</strong>
             </Typography>
-            <List dense sx={{ listStyleType: 'disc', pl: 5 }}>
+            <List dense sx={{ listStyleType: "disc", pl: 5 }}>
               {result.models.length > 0 ? (
                 result.models.map((model, index) => (
-                  <ListItem key={index} sx={{ display: 'list-item' }}>
+                  <ListItem key={index} sx={{ display: "list-item" }}>
                     <ListItemText primary={model} />
                   </ListItem>
                 ))
               ) : (
-                <ListItem sx={{ display: 'list-item' }}>
-                  <ListItemText primary="No Options" />
+                <ListItem sx={{ display: "list-item" }}>
+                  <ListItemText primary="No Options" data-testid="no-options" />
                 </ListItem>
               )}
             </List>
             <Typography variant="body1">
               <strong>Rules Applied</strong>
             </Typography>
-            <List dense sx={{ listStyleType: 'disc', pl: 5 }}>
+            <List dense sx={{ listStyleType: "disc", pl: 5 }}>
               {result.reasons.map((rule, index) => (
-                <ListItem key={index} sx={{ display: 'list-item' }}>
+                <ListItem key={index} sx={{ display: "list-item" }}>
                   <ListItemText primary={rule} />
                 </ListItem>
               ))}

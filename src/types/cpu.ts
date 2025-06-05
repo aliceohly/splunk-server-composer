@@ -1,5 +1,1 @@
-export enum CpuType {
-  X86 = 'X86',
-  Power = 'Power',
-  ARM = 'ARM'
-} 
+export type CpuType = "X86" | "Power" | "ARM";

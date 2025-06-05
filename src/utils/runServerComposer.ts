@@ -1,4 +1,4 @@
-import { ServerConfiguration, ServerEvaluationResult } from "../types/server";
+import { ServerComposition, ServerComposerResult } from "../types/server";
 import { ServerModel } from "../types/serverModel";
 import { ConfigRule } from "../types/configRule";
 import {
@@ -8,9 +8,9 @@ import {
   MIN_MEMORY_4U,
 } from "../constants/memory";
 
-export const evaluateServerConfiguration = (
-  config: ServerConfiguration
-): ServerEvaluationResult => {
+export const runServerComposer = (
+  config: ServerComposition
+): ServerComposerResult => {
   const { cpu, memorySize, hasGpuAccelerator } = config;
   const models: ServerModel[] = [];
   const reasons: ConfigRule[] = [];
@@ -71,13 +71,4 @@ export const evaluateServerConfiguration = (
     models: Array.from(new Set(models)),
     reasons: reasons,
   };
-};
-
-export const validateMemorySize = (memorySize: number): boolean => {
-  if (memorySize < MIN_MEMORY || memorySize > MAX_MEMORY) {
-    return false;
-  }
-
-  // Check if it's a power of 2
-  return (memorySize & (memorySize - 1)) === 0;
 };

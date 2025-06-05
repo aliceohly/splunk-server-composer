@@ -93,7 +93,7 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
-  it("should evaluate configuration and show results", async () => {
+  it("should evaluate composition and show results", async () => {
     // Act
     userEvent.click(cpuDropdown);
     userEvent.click(screen.getByTestId("cpu-power"));
@@ -118,7 +118,7 @@ describe("App", () => {
     });
   });
 
-  it("should show no options for invalid configuration", async () => {
+  it("should show no options for invalid composition", async () => {
     // Act
     userEvent.click(cpuDropdown);
     userEvent.click(screen.getByTestId("cpu-power"));

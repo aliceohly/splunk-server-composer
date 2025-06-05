@@ -1,13 +1,13 @@
-import { CpuType } from './cpu';
-import { ServerModel } from './serverModel';
+import { CpuType } from "./cpu";
+import { ServerModel } from "./serverModel";
 
-export interface ServerConfiguration {
+export interface ServerComposition {
   cpu: CpuType;
   memorySize: number;
   hasGpuAccelerator: boolean;
 }
 
-export interface ServerEvaluationResult {
+export interface ServerComposerResult {
   models: ServerModel[];
   reasons: string[];
-} 
+}

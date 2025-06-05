@@ -28,7 +28,7 @@ The interface is divided into two main sections:
 - React.js with TypeScript for the frontend framework
 - Material-UI (MUI) for UI components and styling
 - Jest and React Testing Library for unit testing
-- Create React App for project setup and build tools
+- This application does not use Redux or useReducer because the current state is simple and does not involve complex interactions. Introducing them would add unnecessary complexity and overhead to maintenance.
 
 ## Getting Started
 

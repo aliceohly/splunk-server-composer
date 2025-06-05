@@ -19,45 +19,43 @@ import {
   ListItemText,
   SelectChangeEvent,
 } from "@mui/material";
-import { ServerConfiguration, ServerEvaluationResult } from "./types/server";
-import { CpuType } from "./types/cpu";
-import {
-  evaluateServerConfiguration,
-  validateMemorySize,
-} from "./reducers/serverReducer";
+import { ServerComposition, CpuType, ServerComposerResult } from "./types";
+import { runServerComposer, validateMemorySize } from "./utils";
 
 function App() {
   const cpuTypes: CpuType[] = ["X86", "Power", "ARM"];
 
-  const [config, setConfig] = useState<ServerConfiguration>({
-    cpu: cpuTypes[0],
-    memorySize: 2048,
-    hasGpuAccelerator: false,
-  });
-  const [result, setResult] = useState<ServerEvaluationResult | null>(null);
+  const [serverComposition, setServerComposition] = useState<ServerComposition>(
+    {
+      cpu: cpuTypes[0],
+      memorySize: 2048,
+      hasGpuAccelerator: false,
+    }
+  );
+  const [result, setResult] = useState<ServerComposerResult | null>(null);
   const [error, setError] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!validateMemorySize(config.memorySize))
+    if (!validateMemorySize(serverComposition.memorySize))
       setError(
         "Memory size must be a power of 2 between 2,048MB and 8,388,608MB"
       );
 
-    const evaluationResult = evaluateServerConfiguration(config);
-    setResult(evaluationResult);
+    const serverComposerResult = runServerComposer(serverComposition);
+    setResult(serverComposerResult);
   };
 
   const handleMemoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/,/g, "");
     if (value === "") {
-      setConfig({ ...config, memorySize: 0 });
+      setServerComposition({ ...serverComposition, memorySize: 0 });
     } else {
       const memorySize = parseInt(value, 10);
       if (!isNaN(memorySize)) {
-        setConfig({ ...config, memorySize: memorySize });
+        setServerComposition({ ...serverComposition, memorySize: memorySize });
       }
     }
   };
@@ -76,10 +74,13 @@ function App() {
               <Select
                 data-testid="cpu-select"
                 labelId="cpu-label"
-                value={config.cpu}
+                value={serverComposition.cpu}
                 label="CPU"
                 onChange={(e: SelectChangeEvent<CpuType>) =>
-                  setConfig({ ...config, cpu: e.target.value })
+                  setServerComposition({
+                    ...serverComposition,
+                    cpu: e.target.value,
+                  })
                 }
               >
                 {cpuTypes.map((cpuType) => (
@@ -97,9 +98,9 @@ function App() {
               fullWidth
               label="Memory Size"
               value={
-                config.memorySize === 0
+                serverComposition.memorySize === 0
                   ? ""
-                  : config.memorySize.toLocaleString()
+                  : serverComposition.memorySize.toLocaleString()
               }
               onChange={handleMemoryChange}
               sx={{ mb: 2 }}
@@ -122,10 +123,10 @@ function App() {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={config.hasGpuAccelerator}
+                  checked={serverComposition.hasGpuAccelerator}
                   onChange={(e) =>
-                    setConfig({
-                      ...config,
+                    setServerComposition({
+                      ...serverComposition,
                       hasGpuAccelerator: e.target.checked,
                     })
                   }

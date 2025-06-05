@@ -21,13 +21,15 @@ The interface is divided into two main sections:
 - User-friendly interface with clear separation between input and output sections
 - Built with Material-UI (MUI) for a modern, responsive design
 - Comprehensive unit tests for reliable functionality
+- TypeScript for enhanced type safety and better developer experience
 
 ## Technologies Used
 
-- React.js for the frontend framework
+- React.js with TypeScript for the frontend framework
 - Material-UI (MUI) for UI components and styling
 - Jest and React Testing Library for unit testing
 - Create React App for project setup and build tools
+- TypeScript for static type checking and improved code quality
 
 ## Getting Started
 
@@ -78,3 +80,4 @@ To learn more about the technologies used in this project:
 - [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started)
 - [Jest documentation](https://jestjs.io/)
 - [React Testing Library documentation](https://testing-library.com/docs/react-testing-library/intro/)
+- [TypeScript documentation](https://www.typescriptlang.org/docs/)

@@ -29,7 +29,6 @@ The interface is divided into two main sections:
 - Material-UI (MUI) for UI components and styling
 - Jest and React Testing Library for unit testing
 - Create React App for project setup and build tools
-- TypeScript for static type checking and improved code quality
 
 ## Getting Started
 
@@ -66,6 +65,20 @@ The project includes comprehensive unit tests for components and business logic.
 #### `npm run build`
 
 Builds the app for production to the `build` folder.
+
+### Local snapshots
+
+#### Example 1
+![Server Composer Interface](./assets/example-1.png)
+
+#### Example 2
+![Server Composer Interface](./assets/example-2.png)
+
+#### Example 3
+![Server Composer Interface](./assets/example-3.png)
+
+#### Example 4
+![Server Composer Interface](./assets/example-4.png)
 
 ## Development
 

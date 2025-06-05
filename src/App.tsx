@@ -51,9 +51,14 @@ function App() {
   };
 
   const handleMemoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const memorySize = parseInt(e.target.value.replace(/,/g, ""), 10);
-    if (!isNaN(memorySize)) {
-      setConfig({ ...config, memorySize: memorySize });
+    const value = e.target.value.replace(/,/g, "");
+    if (value === "") {
+      setConfig({ ...config, memorySize: 0 });
+    } else {
+      const memorySize = parseInt(value, 10);
+      if (!isNaN(memorySize)) {
+        setConfig({ ...config, memorySize: memorySize });
+      }
     }
   };
 
@@ -91,7 +96,11 @@ function App() {
             <TextField
               fullWidth
               label="Memory Size"
-              value={config.memorySize.toLocaleString()}
+              value={
+                config.memorySize === 0
+                  ? ""
+                  : config.memorySize.toLocaleString()
+              }
               onChange={handleMemoryChange}
               sx={{ mb: 2 }}
               helperText="Must be a power of 2 between 2,048MB and 8,388,608MB"
@@ -144,8 +153,12 @@ function App() {
             </Typography>
             <List dense sx={{ listStyleType: "disc", pl: 5 }}>
               {result.models.length > 0 ? (
-                result.models.map((model, index) => (
-                  <ListItem key={index} sx={{ display: "list-item" }}>
+                result.models.map((model) => (
+                  <ListItem
+                    key={model}
+                    sx={{ display: "list-item" }}
+                    data-testid={`model-option-${model.toLowerCase().replace(/\s+/g, "")}`}
+                  >
                     <ListItemText primary={model} />
                   </ListItem>
                 ))

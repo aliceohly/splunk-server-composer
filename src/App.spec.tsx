@@ -1,10 +1,30 @@
-import { render, screen, fireEvent, within, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  within,
+  act,
+  waitFor,
+} from "@testing-library/react";
 import App from "./App";
 import userEvent from "@testing-library/user-event";
 
 describe("App", () => {
-  it("should display header, labels and submit button", () => {
+  let memoryInput: HTMLElement;
+  let submitButton: HTMLElement;
+  let cpuDropdownContainer: HTMLElement;
+  let cpuDropdown: HTMLElement;
+
+  beforeEach(async () => {
     render(<App />);
+    cpuDropdownContainer = await screen.findByTestId("cpu-select");
+    cpuDropdown = within(cpuDropdownContainer).getByRole("combobox");
+    memoryInput = screen.getByLabelText(/Memory Size/i);
+    submitButton = screen.getByRole("button", { name: /Submit/i });
+  });
+
+  it("should display header, labels and submit button", () => {
+    // Assert
     expect(screen.getByText("Server Composer")).toBeInTheDocument();
     expect(screen.getByLabelText(/CPU/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Memory Size/i)).toBeInTheDocument();
@@ -13,49 +33,118 @@ describe("App", () => {
   });
 
   it("should display CPU dropdown", async () => {
-    render(<App />);
+    // Assert
     expect(await screen.findByRole("combobox")).toBeInTheDocument();
   });
 
   it("should display CPU dropdown menu items", async () => {
-    render(<App />);
+    // Arrange
     const cpuDropdown = within(
       await screen.findByTestId("cpu-select")
     ).getByRole("combobox");
 
-    act(() => {
-      userEvent.click(cpuDropdown);
-    });
+    // Act
+    userEvent.click(cpuDropdown);
 
-    expect(await screen.findByTestId("cpu-x86")).toBeInTheDocument();
-    expect(await screen.findByTestId("cpu-power")).toBeInTheDocument();
-    expect(await screen.findByTestId("cpu-arm")).toBeInTheDocument();
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId("cpu-x86")).toBeInTheDocument();
+      expect(screen.getByTestId("cpu-power")).toBeInTheDocument();
+      expect(screen.getByTestId("cpu-arm")).toBeInTheDocument();
+    });
   });
 
-  it("should display CPU dropdown selected value, default value is X86", async () => {
-    render(<App />);
-    const cpuDropdownContainer = await screen.findByTestId("cpu-select");
+  it("should update CPU selection from X86 to Power when clicked", async () => {
+    // Assert
     expect(within(cpuDropdownContainer).getByText("X86")).toBeInTheDocument();
-    const cpuDropdown = within(cpuDropdownContainer).getByRole("combobox");
 
+    // Act
     userEvent.click(cpuDropdown);
     userEvent.click(await screen.findByTestId("cpu-power"));
-    expect(within(cpuDropdownContainer).getByText("Power")).toBeInTheDocument();
+
+    // Assert
+    await waitFor(() => {
+      expect(
+        within(cpuDropdownContainer).getByText("Power")
+      ).toBeInTheDocument();
+    });
   });
 
   it("should show updated memory size when changed", () => {
-    render(<App />);
-    const memoryInput = screen.getByLabelText(/Memory Size/i);
-
+    // Act
     act(() => {
       fireEvent.change(memoryInput, { target: { value: "4096" } });
     });
+
+    // Assert
     expect(memoryInput).toHaveValue("4,096");
   });
 
-  it("should show updated GPU accelerator when toggled", () => {
-    render(<App />);
+  it("should show error for invalid memory size", () => {
+    // Act
+    act(() => {
+      fireEvent.change(memoryInput, { target: { value: "3000" } });
+      fireEvent.click(submitButton);
+    });
+
+    // Assert
+    expect(
+      screen.getByText(/Memory size must be a power of 2/i)
+    ).toBeInTheDocument();
+  });
+
+  it("should evaluate configuration and show results", async () => {
+    // Act
+    userEvent.click(cpuDropdown);
+    userEvent.click(screen.getByTestId("cpu-power"));
+    act(() => {
+      fireEvent.change(memoryInput, { target: { value: "131072" } });
+      fireEvent.click(submitButton);
+    });
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByText(/Server Model Options/i)).toBeInTheDocument();
+      expect(screen.getByText(/Rules Applied/i)).toBeInTheDocument();
+      expect(screen.getByTestId("model-option-mainframe")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("model-option-4urackserver")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("model-option-towerserver")
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Rule 2/i)).toBeInTheDocument();
+      expect(screen.getByText(/Rule 3/i)).toBeInTheDocument();
+    });
+  });
+
+  it("should show no options for invalid configuration", async () => {
+    // Act
+    userEvent.click(cpuDropdown);
+    userEvent.click(screen.getByTestId("cpu-power"));
+    act(() => {
+      fireEvent.change(memoryInput, { target: { value: "1024" } });
+      fireEvent.click(submitButton);
+    });
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId("no-options")).toBeInTheDocument();
+    });
+  });
+
+  it("should handle multiple GPU toggles correctly", () => {
     const gpuCheckbox = screen.getByLabelText(/GPU Accelerator Card/i);
+
+    act(() => {
+      fireEvent.click(gpuCheckbox);
+    });
+    expect(gpuCheckbox).toBeChecked();
+
+    act(() => {
+      fireEvent.click(gpuCheckbox);
+    });
+    expect(gpuCheckbox).not.toBeChecked();
 
     act(() => {
       fireEvent.click(gpuCheckbox);
@@ -63,11 +152,7 @@ describe("App", () => {
     expect(gpuCheckbox).toBeChecked();
   });
 
-  it("should show error for invalid memory size", () => {
-    render(<App />);
-    const memoryInput = screen.getByLabelText(/Memory Size/i);
-    const submitButton = screen.getByRole("button", { name: /Submit/i });
-
+  it("should show error message when submitting with invalid memory size", () => {
     act(() => {
       fireEvent.change(memoryInput, { target: { value: "3000" } });
       fireEvent.click(submitButton);
@@ -76,40 +161,14 @@ describe("App", () => {
     expect(
       screen.getByText(/Memory size must be a power of 2/i)
     ).toBeInTheDocument();
-  });
-
-  it("should evaluate configuration and show results", async () => {
-    render(<App />);
-    const memoryInput = screen.getByLabelText(/Memory Size/i);
-    const submitButton = screen.getByRole("button", { name: /Submit/i });
-    const cpuDropdownContainer = await screen.findByTestId("cpu-select");
-    const cpuDropdown = within(cpuDropdownContainer).getByRole("combobox");
-    userEvent.click(cpuDropdown);
-    userEvent.click(screen.getByTestId("cpu-power"));
 
     act(() => {
-      fireEvent.change(memoryInput, { target: { value: "131072" } });
+      fireEvent.change(memoryInput, { target: { value: "4096" } });
       fireEvent.click(submitButton);
     });
 
-    expect(screen.getByText(/Server Model Options/i)).toBeInTheDocument();
-    expect(screen.getByText(/Rules Applied/i)).toBeInTheDocument();
-  });
-
-  it("should show no options for invalid configuration", async () => {
-    render(<App />);
-    const memoryInput = screen.getByLabelText(/Memory Size/i);
-    const submitButton = screen.getByRole("button", { name: /Submit/i });
-    const cpuDropdownContainer = await screen.findByTestId("cpu-select");
-    const cpuDropdown = within(cpuDropdownContainer).getByRole("combobox");
-    userEvent.click(cpuDropdown);
-    userEvent.click(screen.getByTestId("cpu-power"));
-
-    act(() => {
-      fireEvent.change(memoryInput, { target: { value: "1024" } });
-      fireEvent.click(submitButton);
-    });
-
-    expect(screen.getByTestId("no-options")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Memory size must be a power of 2/i)
+    ).not.toBeInTheDocument();
   });
 });

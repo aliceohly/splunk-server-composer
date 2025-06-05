@@ -1,25 +1,24 @@
 import { ServerComposition, ServerComposerResult } from "../types/server";
 import { ServerModel } from "../types/serverModel";
-import { ConfigRule } from "../types/configRule";
 import {
   MIN_MEMORY,
-  MAX_MEMORY,
   MIN_MEMORY_GPU_ACCELERATOR,
   MIN_MEMORY_4U,
 } from "../constants/memory";
+import { ComposeRule } from "../constants/composeRule";
 
 export const runServerComposer = (
-  config: ServerComposition
+  serverComposition: ServerComposition
 ): ServerComposerResult => {
-  const { cpu, memorySize, hasGpuAccelerator } = config;
+  const { cpu, memorySize, hasGpuAccelerator } = serverComposition;
   const models: ServerModel[] = [];
-  const reasons: ConfigRule[] = [];
+  const reasons: (typeof ComposeRule)[keyof typeof ComposeRule][] = [];
 
   // Rule 4
   if (memorySize < MIN_MEMORY) {
     return {
       models: [],
-      reasons: [ConfigRule.RULE_4],
+      reasons: [ComposeRule.RULE_4],
     };
   }
 
@@ -28,19 +27,19 @@ export const runServerComposer = (
     if (cpu === "ARM" && memorySize >= MIN_MEMORY_GPU_ACCELERATOR) {
       return {
         models: [ServerModel.HighDensityServer],
-        reasons: [ConfigRule.RULE_1],
+        reasons: [ComposeRule.RULE_1],
       };
     }
     return {
       models: [],
-      reasons: [ConfigRule.RULE_1],
+      reasons: [ComposeRule.RULE_1],
     };
   }
 
   // Rules 2 and 3
   if (cpu === "Power") {
     models.push(ServerModel.Mainframe);
-    reasons.push(ConfigRule.RULE_2);
+    reasons.push(ComposeRule.RULE_2);
 
     if (memorySize >= MIN_MEMORY_4U) {
       models.push(ServerModel.RackServer4U);
@@ -48,7 +47,7 @@ export const runServerComposer = (
     } else {
       models.push(ServerModel.TowerServer);
     }
-    reasons.push(ConfigRule.RULE_3);
+    reasons.push(ComposeRule.RULE_3);
   } else {
     if (memorySize >= MIN_MEMORY_4U) {
       models.push(ServerModel.RackServer4U);
@@ -56,14 +55,14 @@ export const runServerComposer = (
     } else {
       models.push(ServerModel.TowerServer);
     }
-    reasons.push(ConfigRule.RULE_3);
+    reasons.push(ComposeRule.RULE_3);
   }
 
   // Rule 5
   if (models.length === 0) {
     return {
       models: [],
-      reasons: [ConfigRule.RULE_5],
+      reasons: [ComposeRule.RULE_5],
     };
   }
 
